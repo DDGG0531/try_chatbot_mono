@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { prisma } from '@/prisma.js';
+import { prisma } from '@/prisma';
 import admin from 'firebase-admin';
 
 // Load environment from .env (Prisma default) and .env.local (runtime)
@@ -87,12 +87,12 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 }
 
 // API routes
-app.get('/api/me', authMiddleware, (req: Request, res: Response) => {
+app.get('/me', authMiddleware, (req: Request, res: Response) => {
   // @ts-expect-error user injected by middleware
   res.json(req.user);
 });
 
-app.get('/api/health', (_req: Request, res: Response) => res.json({ ok: true }));
+app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
 
 app.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT}`);

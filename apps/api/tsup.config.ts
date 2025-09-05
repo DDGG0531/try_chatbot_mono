@@ -18,9 +18,9 @@ export default defineConfig({
     'dotenv',
   ],
   tsconfig: 'tsconfig.json',
-  // Map `@/` to `src/`
-  alias: {
-    '@': './src',
-  },
+  // esbuildOptions(options) {
+  //   options.alias = {
+  //     '@': './src',   // 把 @ 指到 src
+  //   }
+  // },
 });
-

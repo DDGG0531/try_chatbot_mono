@@ -16,7 +16,9 @@
 
 <script setup lang="ts">
 import { onMounted, ref, onUnmounted } from 'vue';
-import { fetchMe, loginWithGoogle, logout, type User } from '@/lib/api';
+import { fetchMe } from '@/api/users';
+import { loginWithGoogle, logout } from '@/api/auth';
+import type { User } from '@/api/types';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 

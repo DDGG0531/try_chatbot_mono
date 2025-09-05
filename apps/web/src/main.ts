@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import App from '@/App.vue';
 import Home from '@/pages/Home.vue';
 import Profile from '@/pages/Profile.vue';
-import '@/assets/tailwind.css';
+import './index.css'
 
 const routes = [
   { path: '/', component: Home },
