@@ -16,6 +16,7 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   conversations Conversation[]
+  knowledgeBases KnowledgeBase[]
 }
 
 model Conversation {
@@ -39,4 +40,34 @@ model Message {
   createdAt      DateTime     @default(now())
   reference      String
   @@index([conversationId, createdAt])
+}
+
+// M3: RAG v1 - 基礎 KB 與文件模型
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  documents   Document[]
+
+  @@index([userId, createdAt])
+}
+
+model Document {
+  id        String        @id @default(cuid())
+  kbId      String
+  kb        KnowledgeBase @relation(fields: [kbId], references: [id], onDelete: Cascade)
+  question  String?
+  answer    String?
+  content   String?
+  extra     Json?
+  vector    Unsupported("vector")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([kbId, createdAt])
 }

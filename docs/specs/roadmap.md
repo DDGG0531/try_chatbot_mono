@@ -33,14 +33,12 @@ Roadmap 與驗收
 
 - M3 RAG v1
   - 前端（Web）
-    - [ ] KB 管理頁：列表、新增/編輯/刪除
-    - [ ] 文件清單與上傳（顯示匯入狀態）
-    - [ ] 聊天頁整合 KB 多選器
+    - [x] KB 管理頁：列表、新增/編輯/刪除
+    - [ ] 聊天頁整合 KB 選擇器
     - [ ] 訊息中顯示引用並可展開來源摘要
   - 後端（API）
-    - [ ] 擴充 Prisma：`KnowledgeBase`、`Document`、`Chunk`、`Embedding`、`ConversationKB`
-    - [ ] `GET/POST/PATCH/DELETE /kb` 端點
-    - [ ] `/kb/:id/docs` 上傳/URL 匯入、`/kb/:id/reindex`、`/jobs/:jobId`
+    - [x] 擴充 Prisma：`KnowledgeBase`、`Document`
+    - [x] `GET/POST/PATCH/DELETE /kb` 端點
     - [ ] 匯入管線：以 LangChain Loader/Splitter/Embeddings 產生向量存 pgvector
     - [ ] 聊天檢索整合 `/chat`（LangChain Retriever，附 citations）
   - 驗收：回答含引用並可展開來源內容；選擇 KB 能影響回答。

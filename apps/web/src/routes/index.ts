@@ -15,14 +15,15 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/ui',
-    name: 'ui-demo',
-    component: () => import('@/pages/UiDemo.vue'),
-  },
-  {
     path: '/chat',
     name: 'chat',
     component: () => import('@/pages/Chat.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/kb',
+    name: 'kb',
+    component: () => import('@/pages/Kb.vue'),
     meta: { requiresAuth: true },
   },
   {

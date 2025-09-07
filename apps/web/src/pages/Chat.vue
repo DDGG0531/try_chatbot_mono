@@ -1,5 +1,5 @@
 <template>
-  <div class="grid h-[calc(100dvh-80px)] grid-cols-[16rem_1fr] gap-3">
+  <div class="grid h-full min-h-0 grid-cols-[16rem_1fr] gap-3">
     <!-- 側欄：會話列表 -->
     <aside class="flex min-h-0 flex-col gap-3">
       <div class="rounded-xl border p-3">
@@ -22,7 +22,7 @@
     </aside>
 
     <!-- 主區：訊息 + 輸入 -->
-    <div class="grid grid-rows-[1fr_auto] gap-3">
+    <div class="grid min-h-0 grid-rows-[1fr_auto] gap-3">
       <!-- 訊息列表區 -->
       <div ref="listEl" class="overflow-auto rounded-xl border bg-card p-3" aria-label="chat messages">
         <div v-if="selectedMessages.length === 0" class="text-center text-sm text-muted-foreground">

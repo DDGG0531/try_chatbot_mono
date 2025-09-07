@@ -20,3 +20,13 @@ export type Message = {
   reference: string;
   createdAt: string | Date;
 };
+
+export type KnowledgeBase = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string | null;
+  isPublic: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
