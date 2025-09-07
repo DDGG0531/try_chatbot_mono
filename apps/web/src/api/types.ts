@@ -3,6 +3,7 @@ export type User = {
   displayName: string;
   email?: string;
   photo?: string;
+  role?: 'USER' | 'ADMIN';
 };
 
 export type Conversation = {
@@ -19,6 +20,7 @@ export type Message = {
   content: string;
   reference: string;
   createdAt: string | Date;
+  citations?: Array<{ id: string; score: number }>;
 };
 
 export type KnowledgeBase = {

@@ -9,13 +9,13 @@ export const conversationsRouter = Router();
 
 const listQuery = z.object({
   limit: z.coerce.number().min(1).max(50).optional(),
-  cursor: z.string().datetime().optional(), // ISO timestamp
+  offset: z.coerce.number().min(0).optional(),
 });
 const idParam = z.object({ id: z.string().min(1) });
 const upsertBody = z.object({ title: z.string().min(1).max(100).optional() }).strict();
 const msgListQuery = z.object({
   limit: z.coerce.number().min(1).max(200).optional(),
-  cursor: z.string().datetime().optional(),
+  offset: z.coerce.number().min(0).optional(),
 });
 
 // GET /conversations
@@ -26,18 +26,17 @@ conversationsRouter.get(
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
     const q = (req as any).validated!.query as z.infer<typeof listQuery>;
-    const { limit = 20, cursor } = q;
+    const { limit = 20, offset = 0 } = q;
     const where: any = { userId: user.id };
-    if (cursor) where.createdAt = { lt: new Date(cursor) };
-
     const items = await prisma.conversation.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: limit,
+      skip: offset,
+      take: limit + 1,
       select: { id: true, userId: true, title: true, createdAt: true, updatedAt: true },
     });
-    const nextCursor = items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
-    res.json({ items, nextCursor });
+    const hasNextPage = items.length > limit;
+    res.json({ items: hasNextPage ? items.slice(0, limit) : items, hasNextPage });
   },
 );
 
@@ -86,22 +85,21 @@ conversationsRouter.get(
     const p = (req as any).validated!.params as z.infer<typeof idParam>;
     const q = (req as any).validated!.query as z.infer<typeof msgListQuery>;
     const { id } = p;
-    const { limit = 200, cursor } = q;
+    const { limit = 200, offset = 0 } = q;
 
     const conv = await prisma.conversation.findFirst({ where: { id, userId: user.id } });
     if (!conv) return res.sendStatus(404);
 
     const where: any = { conversationId: id };
-    if (cursor) where.createdAt = { lt: new Date(cursor) };
-
     const items = await prisma.message.findMany({
       where,
       orderBy: { createdAt: 'asc' },
-      take: limit,
-      select: { id: true, role: true, content: true, createdAt: true, reference: true },
+      skip: offset,
+      take: limit + 1,
+      select: { id: true, role: true, content: true, createdAt: true, reference: true, citations: true },
     });
-    const nextCursor = items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
-    res.json({ items, nextCursor });
+    const hasNextPage = items.length > limit;
+    res.json({ items: hasNextPage ? items.slice(0, limit) : items, hasNextPage });
   },
 );
 

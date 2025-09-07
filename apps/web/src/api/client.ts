@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 import { auth } from '@/lib/firebase';
 
 // API Client
@@ -19,5 +20,34 @@ http.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+  // E2E：允許以本地儲存的 Bearer 直接帶入
+  if (import.meta.env.VITE_E2E_AUTH === '1') {
+    const token = localStorage.getItem('E2E_BEARER');
+    if (token) {
+      config.headers = config.headers ?? {};
+      config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    }
+  }
   return config;
 });
+
+// 全域回應攔截：統一錯誤提示
+http.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const cfg = err?.config || {};
+    const headers = cfg.headers || {};
+    // 預設為 silent；只有在 show 標記時才提示
+    const show = cfg.showError === true || headers['X-Show-Error'] === '1';
+    if (show) {
+      const status = err?.response?.status;
+      const statusText = err?.response?.statusText;
+      const data = err?.response?.data;
+      const serverMsg = (typeof data === 'string' ? data : (data?.error || data?.message)) as string | undefined;
+      const msg = serverMsg || err?.message || '發生未知錯誤';
+      const prefix = status ? `${status}${statusText ? ' ' + statusText : ''}` : '請求失敗';
+      toast.error(`${prefix}：${msg}`);
+    }
+    return Promise.reject(err);
+  },
+);

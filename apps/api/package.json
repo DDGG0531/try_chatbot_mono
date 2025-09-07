@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:e2e": "E2E_TEST_AUTH=1 tsx watch src/server.ts",
     "build": "tsup",
     "predev": "prisma generate",
     "start": "node dist/server.js",

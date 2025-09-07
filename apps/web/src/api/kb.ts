@@ -1,8 +1,8 @@
 import { http } from '@/api/client';
 import type { KnowledgeBase } from './types';
 
-export async function listKb(params?: { limit?: number; cursor?: string }) {
-  const { data } = await http.get<{ items: KnowledgeBase[]; nextCursor?: string }>('/kb', { params });
+export async function listKb(params?: { limit?: number; offset?: number }) {
+  const { data } = await http.get<{ items: KnowledgeBase[]; hasNextPage?: boolean }>('/kb', { params });
   return data;
 }
 
@@ -24,4 +24,3 @@ export async function updateKb(id: string, payload: { name?: string; description
 export async function deleteKb(id: string) {
   await http.delete(`/kb/${id}`);
 }
-

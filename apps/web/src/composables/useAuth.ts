@@ -26,6 +26,24 @@ export function initAuth() {
   const session = useSessionStore();
   session.setLoading();
 
+  // E2E：若設定 VITE_E2E_AUTH 且有本地 Bearer，直接嘗試以 /me 同步會話
+  if (import.meta.env.VITE_E2E_AUTH === '1') {
+    const token = localStorage.getItem('E2E_BEARER');
+    if (token) {
+      fetchMe()
+        .then((me) => session.setUser(me))
+        .catch(() => session.setUser(null))
+        .finally(() => {
+          if (!ready) {
+            ready = true;
+            const resolvers = readyResolvers;
+            readyResolvers = [];
+            resolvers.forEach((r) => r());
+          }
+        });
+    }
+  }
+
   onAuthStateChanged(auth, async (firebaseUser) => {
     try {
       if (!firebaseUser) {

@@ -1,8 +1,8 @@
 import { http } from '@/api/client';
 import type { Conversation, Message } from '@/api/types';
 
-export async function listConversations(params?: { limit?: number; cursor?: string }) {
-  const { data } = await http.get<{ items: Conversation[]; nextCursor?: string }>('/conversations', {
+export async function listConversations(params?: { limit?: number; offset?: number }) {
+  const { data } = await http.get<{ items: Conversation[]; hasNextPage?: boolean }>('/conversations', {
     params,
   });
   return data;
@@ -18,11 +18,14 @@ export async function getConversation(id: string) {
   return data;
 }
 
-export async function listMessages(conversationId: string, params?: { limit?: number; cursor?: string }) {
-  const { data } = await http.get<{ items: Message[]; nextCursor?: string }>(
+export async function listMessages(conversationId: string, params?: { limit?: number; offset?: number }) {
+  const { data } = await http.get<{ items: Message[]; hasNextPage?: boolean }>(
     `/conversations/${conversationId}/messages`,
     { params },
   );
   return data;
 }
 
+export async function deleteConversation(id: string) {
+  await http.delete(`/conversations/${id}`);
+}

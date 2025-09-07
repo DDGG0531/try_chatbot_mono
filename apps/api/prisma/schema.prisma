@@ -13,10 +13,17 @@ model User {
   email       String?  @unique
   photo       String?
   provider    String
+  role        Role     @default(USER)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   conversations Conversation[]
   knowledgeBases KnowledgeBase[]
+  auditLogs   AuditLog[]
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Conversation {
@@ -39,6 +46,7 @@ model Message {
   content        String
   createdAt      DateTime     @default(now())
   reference      String
+  citations      Json?
   @@index([conversationId, createdAt])
 }
 
@@ -65,9 +73,23 @@ model Document {
   answer    String?
   content   String?
   extra     Json?
-  vector    Unsupported("vector")
+  vector    Unsupported("vector")?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
   @@index([kbId, createdAt])
+}
+
+// 稽核紀錄：追蹤關鍵管理操作（角色變更、KB 刪除、重建索引等）
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String
+  actor        User     @relation(fields: [actorId], references: [id])
+  action       String
+  resourceType String?
+  resourceId   String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
 }

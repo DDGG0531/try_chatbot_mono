@@ -88,6 +88,19 @@ A quick guide to run this monorepo (Vue + Express + Google Login + Prisma + Post
 - Dev all: `pnpm -r dev`
 - Build all: `pnpm -r build`
 
+## E2E 測試（Playwright）
+- 啟用測試模式環境變數：
+  - API：`E2E_TEST_AUTH=1`（允許 `Bearer e2e:<email>` 直接驗證）
+  - WEB：`VITE_E2E_AUTH=1`（允許前端從 `localStorage.E2E_BEARER` 帶入 Authorization）
+- 啟動服務：
+  - `pnpm --filter api dev` 和 `pnpm --filter web dev`
+- 在另一視窗執行測試：
+  - 安裝套件（首次）：`pnpm add -D @playwright/test`
+  - 跑測試：`npx playwright test --config=tests/e2e/playwright.config.ts`
+- 測試登入原理：
+  - 測試會在頁面載入前注入 `localStorage.E2E_BEARER = 'Bearer e2e:z887700101703027@gmail.com'`
+  - 後端將該使用者視為 ADMIN 角色，無需 Firebase Popup 登入即可跑 E2E
+
 ## Folder Structure (high level)
 - apps/web: Vue 3 + Vite frontend
 - apps/api: Express + Passport Google + Prisma backend

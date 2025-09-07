@@ -34,26 +34,29 @@ Roadmap 與驗收
 - M3 RAG v1
   - 前端（Web）
     - [x] KB 管理頁：列表、新增/編輯/刪除
-    - [ ] 聊天頁整合 KB 選擇器
-    - [ ] 訊息中顯示引用並可展開來源摘要
+    - [x] 聊天頁整合 KB 選擇器
+    - [x] 訊息中顯示引用並可展開來源摘要
   - 後端（API）
     - [x] 擴充 Prisma：`KnowledgeBase`、`Document`
     - [x] `GET/POST/PATCH/DELETE /kb` 端點
-    - [ ] 匯入管線：以 LangChain Loader/Splitter/Embeddings 產生向量存 pgvector
-    - [ ] 聊天檢索整合 `/chat`（LangChain Retriever，附 citations）
+    - [x] 匯入管線：以 Embeddings 產生向量存 pgvector
+    - [x] 聊天檢索整合 `/chat`（Retriever，附 citations）
   - 驗收：回答含引用並可展開來源內容；選擇 KB 能影響回答。
 
 - M4 後台與權限
   - 前端（Web）
-    - [ ] Admin 使用者管理頁：表格（id/email/name/role）
-    - [ ] 變更角色操作（即時更新）
-    - [ ] UI 權限：隱藏導覽/停用按鈕＋提示
+    - [x] Admin 使用者管理頁：表格（id/email/name/role）
+    - [x] 變更角色操作（即時更新）
+    - [x] UI 權限：隱藏導覽／路由守衛（403 導頁）
   - 後端（API）
-    - [ ] 啟用 RBAC（`User.role`: USER/EDITOR/ADMIN）
-    - [ ] 中介層套用角色保護（Admin/KB 路由）
-    - [ ] `GET /admin/users`、`PATCH /admin/users/:id`（更新角色）
-    - [ ] 針對 KB 資源擁有者/角色檢查
-    - [ ] 稽核：角色變更、KB 刪除、重建索引（userId/resourceId/timestamp）
+    - [x] 啟用 RBAC（`User.role`: USER/EDITOR/ADMIN）
+    - [x] 中介層套用角色保護（Admin/KB 路由）
+    - [x] `GET /admin/users`、`PATCH /admin/users/:id`（更新角色）
+    - [x] 針對 KB 資源擁有者/角色檢查
+    - 稽核（userId/resourceId/timestamp）：
+      - [x] 角色變更
+      - [x] KB 刪除
+      - [ ] 重建索引
   - 驗收：Admin 可變更角色；非 Admin 受阻擋；KB 權限正確套用。
 
 - M5 打磨與可觀測性
@@ -71,4 +74,8 @@ Roadmap 與驗收
 - Chat：POST /chat 會串流 `delta` 事件並以 `done` 結束（附 id）。
 - History：完成聊天後，GET /conversations 含新會話；GET messages 含雙方訊息。
 - RAG：選擇 KB 後，回應包含與上傳文件相符的引用。
-- Permissions：非 Admin 不能訪問 `/admin/users`；editor/admin 可建立 KB；使用者不可刪除他人 KB。
+- Permissions：
+  - 非 Admin 不能訪問 `/admin/*`，將導向 403。
+  - editor/admin 可建立 KB；使用者不可刪除他人 KB。
+  - 不存在的路由導向 404。
+  - 公開 KB 可被不同使用者選用於聊天檢索（共享知識庫）。

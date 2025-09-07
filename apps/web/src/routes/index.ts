@@ -9,6 +9,18 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/Home.vue'),
   },
   {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/pages/AdminUsers.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/audit-logs',
+    name: 'admin-audit',
+    component: () => import('@/pages/AdminAudit.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/profile',
     name: 'profile',
     component: () => import('@/pages/Profile.vue'),
@@ -27,9 +39,25 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/test',
-    name: 'test',
-    component: () => import('@/pages/Test.vue'),
+    path: '/kb/:id/docs',
+    name: 'kb-docs',
+    component: () => import('@/pages/KbDocs.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/docs/:docId',
+    name: 'doc',
+    component: () => import('@/pages/KbDocDetail.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/404',
+    name: 'not-found',
+    component: () => import('@/pages/NotFound.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/404',
   },
 ]
 
@@ -50,6 +78,12 @@ export function createAppRouter() {
         await waitForAuthReady()
       }
       if (!session.isAuthenticated) return { name: 'home' }
+    }
+    if (_to.meta?.requiresAdmin) {
+      if (session.status === 'loading') {
+        await waitForAuthReady()
+      }
+      if (session.user?.role !== 'ADMIN') return { name: 'not-found', path: '/403' }
     }
     return true
   })

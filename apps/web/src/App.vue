@@ -3,13 +3,14 @@
   <div class="h-screen flex flex-col">
     <!-- Top Nav -->
     <header class="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-      <div class="container flex h-14 items-center justify-between">
+      <div class="flex h-14 items-center justify-between">
         <div class="flex items-center gap-4">
           <router-link to="/" class="font-semibold">Try Chatbot</router-link>
           <nav class="hidden sm:flex items-center gap-3 text-sm text-muted-foreground">
-            <router-link to="/chat" class="hover:text-foreground">Chat</router-link>
-            <router-link to="/kb" class="hover:text-foreground">KB</router-link>
-            <router-link to="/test" class="hover:text-foreground">Test</router-link>
+          <router-link to="/chat" class="hover:text-foreground">Chat</router-link>
+          <router-link to="/kb" class="hover:text-foreground">KB</router-link>
+          <router-link v-if="session.user?.role==='ADMIN'" to="/admin/users" class="hover:text-foreground">Admin</router-link>
+          <router-link v-if="session.user?.role==='ADMIN'" to="/admin/audit-logs" class="hover:text-foreground">Audit</router-link>
           </nav>
         </div>
         <nav class="flex items-center gap-3 text-sm">
@@ -34,7 +35,6 @@
 <script setup lang="ts">
 import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useSessionStore } from '@/stores/session'
 import { computed } from 'vue'

@@ -8,21 +8,37 @@
           <Button size="sm" variant="outline" @click="onCreateConversation">新會話</Button>
         </div>
         <div class="space-y-1 overflow-auto">
-          <button
+          <div
             v-for="c in conversations"
             :key="c.id"
-            class="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+            class="flex w-full items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
             :class="c.id === selectedId ? 'bg-accent text-accent-foreground' : ''"
-            @click="selectConversation(c.id)"
           >
-            <span class="truncate">{{ c.title }}</span>
-          </button>
+            <button class="flex-1 text-left truncate" @click="selectConversation(c.id)">{{ c.title }}</button>
+            <Button size="icon" variant="ghost" class="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" @click.stop="confirmDeleteConv(c.id)">
+              <Trash2 class="h-4 w-4" />
+              <span class="sr-only">刪除</span>
+            </Button>
+          </div>
         </div>
       </div>
     </aside>
 
     <!-- 主區：訊息 + 輸入 -->
-    <div class="grid min-h-0 grid-rows-[1fr_auto] gap-3">
+    <div class="grid min-h-0 grid-rows-[auto_1fr_auto] gap-3">
+      <!-- KB Selector -->
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-muted-foreground">知識庫：</label>
+        <Select v-model="selectedKbId">
+          <SelectTrigger class="w-64">
+            <SelectValue placeholder="無" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">無</SelectItem>
+            <SelectItem v-for="kb in kbItems" :key="kb.id" :value="kb.id">{{ kb.name }}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <!-- 訊息列表區 -->
       <div ref="listEl" class="overflow-auto rounded-xl border bg-card p-3" aria-label="chat messages">
         <div v-if="selectedMessages.length === 0" class="text-center text-sm text-muted-foreground">
@@ -39,6 +55,27 @@
             :class="m.role === 'user' ? 'bg-primary/10 border-primary/20' : 'bg-background'"
           >
             <p>{{ m.content }}</p>
+            <!-- Citations -->
+            <div v-if="m.role==='assistant' && m.citations && m.citations.length" class="mt-2 border-t pt-2">
+              <button class="text-xs text-muted-foreground hover:underline" @click="toggleCitations(m.id)">
+                {{ openedCitations[m.id] ? '隱藏引用' : '顯示引用' }}
+              </button>
+              <div v-if="openedCitations[m.id]" class="mt-2 space-y-2">
+                <div v-for="c in m.citations" :key="c.id" class="text-xs">
+                  <div class="font-medium">
+                    來源 
+                    <RouterLink
+                      :to="{ name: 'doc', params: { docId: c.id } }"
+                      target="_blank"
+                      class="underline hover:text-foreground"
+                    >
+                      {{ c.id }}
+                    </RouterLink>
+                    （score: {{ c.score.toFixed(3) }}）
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -56,23 +93,51 @@
         </Button>
       </form>
     </div>
+
+    <!-- Delete Conversation Confirm -->
+    <AlertDialog v-model:open="delConv.open">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>確認刪除會話？</AlertDialogTitle>
+          <AlertDialogDescription>此操作無法復原，將刪除該會話與其中訊息。</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="delConv.open = false">取消</AlertDialogCancel>
+          <AlertDialogAction :disabled="delConv.loading" @click="onDeleteConvConfirmed">
+            {{ delConv.loading ? '刪除中...' : '刪除' }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, computed } from 'vue'
+import { ref, nextTick, onMounted, computed, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { Conversation } from '@/api/types'
+import type { Conversation, KnowledgeBase } from '@/api/types'
 import { listConversations, createConversation as apiCreateConversation, listMessages } from '@/api/conversations'
 import { getIdToken } from '@/api/auth'
+import { deleteConversation as apiDeleteConversation } from '@/api/conversations'
+import { listKb } from '@/api/kb'
+import { getDocById } from '@/api/kb-docs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { toast } from 'vue-sonner'
+import { Trash2 } from 'lucide-vue-next'
 
 type ChatRole = 'user' | 'assistant'
-type ChatMessage = { id: string; role: ChatRole; content: string }
+type Citation = { id: string; score: number }
+type ChatMessage = { id: string; role: ChatRole; content: string; citations?: Citation[] }
 
 const conversations = ref<Conversation[]>([])
 const selectedId = ref<string>('')
 const messagesByConv = ref<Record<string, ChatMessage[]>>({})
+const kbItems = ref<KnowledgeBase[]>([])
+const selectedKbId = ref<string>('none')
+const openedCitations = ref<Record<string, boolean>>({})
+const docCache = ref<Record<string, string>>({})
 
 async function loadConversations() {
   const { items } = await listConversations({ limit: 50 })
@@ -82,11 +147,16 @@ async function loadConversations() {
   }
 }
 
+async function loadKbList() {
+  try { const { items } = await listKb({ limit: 50 }); kbItems.value = items } catch {}
+}
+
 const selectedMessages = computed(() => messagesByConv.value[selectedId.value] ?? [])
 
 const draft = ref('')
 const sending = ref(false)
 const listEl = ref<HTMLDivElement | null>(null)
+const delConv = ref<{ open: boolean; id: string | null; loading: boolean }>({ open: false, id: null, loading: false })
 
 function scrollToBottom() {
   if (!listEl.value) return
@@ -94,7 +164,8 @@ function scrollToBottom() {
 }
 
 onMounted(async () => {
-  await loadConversations()
+  await Promise.all([loadConversations(), loadKbList()])
+  restoreSelectedKb()
   scrollToBottom()
 })
 
@@ -153,6 +224,7 @@ async function onSend() {
       },
       body: JSON.stringify({
         conversationId: sid,
+        kbId: selectedKbId.value && selectedKbId.value !== 'none' ? selectedKbId.value : undefined,
         messages: [{ role: 'user', content: text }],
       }),
     })
@@ -191,6 +263,18 @@ async function onSend() {
               await nextTick()
               scrollToBottom()
             }
+          } else if (payload.type === 'metadata') {
+            // 嘗試掛上 citations
+            if (Array.isArray(payload.citations) && payload.citations.length) {
+              const current = messagesByConv.value[sid] ?? []
+              const lastIdx = current.length - 1
+              if (lastIdx >= 0 && current[lastIdx].id.startsWith('a_')) {
+                const nextArr = current.slice()
+                const last = nextArr[lastIdx]
+                nextArr[lastIdx] = { ...last, citations: payload.citations as Citation[] }
+                messagesByConv.value = { ...messagesByConv.value, [sid]: nextArr }
+              }
+            }
           } else if (payload.type === 'done') {
             // 完成：可依需要刷新或記錄 messageId/conversationId
           }
@@ -215,8 +299,62 @@ async function selectConversation(id: string) {
   selectedId.value = id
   if (!messagesByConv.value[id]) {
     const { items } = await listMessages(id, { limit: 200 })
-    messagesByConv.value[id] = items.map((m) => ({ id: m.id, role: m.role as ChatRole, content: m.content }))
+    messagesByConv.value[id] = items.map((m) => ({ id: m.id, role: m.role as ChatRole, content: m.content, citations: (m as any).citations }))
   }
   nextTick().then(scrollToBottom)
 }
+
+function confirmDeleteConv(id: string) {
+  delConv.value = { open: true, id, loading: false }
+}
+
+async function onDeleteConvConfirmed() {
+  const id = delConv.value.id
+  if (!id) return
+  delConv.value.loading = true
+  try {
+    await apiDeleteConversation(id)
+    conversations.value = conversations.value.filter((c) => c.id !== id)
+    const wasSelected = selectedId.value === id
+    delete messagesByConv.value[id]
+    if (wasSelected) {
+      if (conversations.value.length > 0) {
+        const next = conversations.value[0].id
+        await selectConversation(next)
+      } else {
+        selectedId.value = ''
+      }
+    }
+    toast.success('會話已刪除')
+  } catch (e: any) {
+    toast.error('刪除失敗：' + (e?.message || ''))
+  } finally {
+    delConv.value = { open: false, id: null, loading: false }
+  }
+}
+
+function toggleCitations(mid: string) {
+  openedCitations.value = { ...openedCitations.value, [mid]: !openedCitations.value[mid] }
+}
+
+// --- Persist selected KB to localStorage ---
+const LS_KEY_SELECTED_KB = 'selectedKbId'
+function restoreSelectedKb() {
+  try {
+    const saved = localStorage.getItem(LS_KEY_SELECTED_KB)
+    if (!saved) return
+    if (saved === 'none') { selectedKbId.value = 'none'; return }
+    const ok = kbItems.value.some(k => k.id === saved)
+    if (ok) selectedKbId.value = saved
+    else localStorage.removeItem(LS_KEY_SELECTED_KB)
+  } catch {}
+}
+
+watch(selectedKbId, (val) => {
+  try {
+    if (val && val !== 'none') localStorage.setItem(LS_KEY_SELECTED_KB, val)
+    else localStorage.removeItem(LS_KEY_SELECTED_KB)
+  } catch {}
+})
+
 </script>

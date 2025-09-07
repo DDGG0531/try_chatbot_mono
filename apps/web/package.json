@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:e2e": "VITE_E2E_AUTH=1 vite",
+    "e2e": "playwright test --config=tests/e2e/playwright.config.ts",
+    "e2e:headed": "playwright test --config=tests/e2e/playwright.config.ts --headed",
+    "e2e:install": "playwright install",
     "build": "vite build",
     "preview": "vite preview --port 5173",
     "start": "vite preview --host --port 5173",
@@ -38,6 +42,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^24.3.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",

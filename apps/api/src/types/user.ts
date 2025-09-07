@@ -3,5 +3,5 @@ export type AuthUser = {
   displayName: string;
   email?: string | null;
   photo?: string | null;
+  role?: 'USER' | 'ADMIN';
 };
-
