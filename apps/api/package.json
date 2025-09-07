@@ -13,14 +13,21 @@
     "migrate:deploy": "prisma migrate deploy",
     "lint": "eslint .",
     "format": "prettier -w .",
-    "test": "vitest"
+    "test": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
-    "firebase-admin": "^13.5.0"
+    "firebase-admin": "^13.5.0",
+    "zod": "^4.0.0",
+    "@langchain/community": "^0.3.55",
+    "@langchain/core": "^0.3.75",
+    "@langchain/langgraph": "^0.4.9",
+    "@langchain/openai": "^0.6.11",
+    "langchain": "^0.3.33"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

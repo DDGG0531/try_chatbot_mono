@@ -1,38 +1,32 @@
 <template>
-  <section>
-    <h1>Profile</h1>
-    <p v-if="loading">Loading...</p>
-    <div v-else-if="user">
-      <img v-if="user.photo" :src="user.photo" alt="avatar" width="72" height="72" style="border-radius:50%" />
-      <p><strong>Name:</strong> {{ user.displayName }}</p>
-      <p v-if="user.email"><strong>Email:</strong> {{ user.email }}</p>
-    </div>
-    <div v-else>
-      <p>Please sign in to view your profile.</p>
+  <section class="space-y-6 py-6">
+    <h1 class="text-2xl font-bold">個人檔案</h1>
+
+    <div class="rounded-xl border p-4">
+      <p v-if="status === 'loading'" class="text-muted-foreground">載入中...</p>
+
+      <div v-else-if="user" class="flex items-center gap-4">
+        <div class="h-16 w-16 overflow-hidden rounded-full border">
+          <img v-if="user.photo" :src="user.photo" alt="avatar" class="h-16 w-16 object-cover" />
+          <div v-else class="flex h-16 w-16 items-center justify-center bg-muted text-muted-foreground">?
+          </div>
+        </div>
+        <div class="space-y-1">
+          <p class="font-medium">{{ user.displayName }}</p>
+          <p v-if="user.email" class="text-sm text-muted-foreground">{{ user.email }}</p>
+        </div>
+      </div>
+
+      <div v-else class="text-muted-foreground">請先登入以檢視個人資料。</div>
     </div>
   </section>
-</template>
+  </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted } from 'vue';
-import { fetchMe } from '@/api/users';
-import type { User } from '@/api/types';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { storeToRefs } from 'pinia'
+import { useSessionStore } from '@/stores/session'
 
-const loading = ref(true);
-const user = ref<User | null>(null);
-
-let unsubscribe: (() => void) | undefined;
-
-onMounted(async () => {
-  unsubscribe = onAuthStateChanged(auth, async () => {
-    user.value = await fetchMe();
-    loading.value = false;
-  });
-});
-
-onUnmounted(() => {
-  if (unsubscribe) unsubscribe();
-});
+// 使用全域會話狀態（由 useAuth 初始化並同步 /me）
+const session = useSessionStore()
+const { user, status } = storeToRefs(session)
 </script>

@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+## Agent Defaults
+- 語言：對話與撰寫文件預設使用「繁體中文」（程式碼與終端輸出除外）。
+- 前端 UI：優先使用 shadcn-vue 元件；如需調整樣式，請以 TailwindCSS 的 utility classes 為主，避免自訂樣式與覆寫除非必要。
+- 樣式設計：沿用 `apps/web/src/index.css` 之 shadcn token 與語意化 class（如 `bg-background`、`text-foreground`、`border-border`），確保深淺色一致。
+- 一致性：新頁面/組件請優先選用 `@/components/ui/*`，並以 Tailwind 寫版面；不建立全域 CSS。
+
 ## Project Structure & Module Organization
 - Monorepo layout: `apps/` for runnable projects (web/CLI/bots) and `packages/` for shared libraries. Optional `services/` for integrations.
 - Place tests beside code (e.g., `foo.test.ts`) and any cross‑cutting suites under `tests/`.
@@ -40,3 +46,6 @@ tests/
 ## Security & Configuration Tips
 - Never commit secrets. Use per‑app `.env.local` and load via `dotenv` or framework. Ignore `.env*` in VCS.
 - Rotate provider keys and redact logs. Validate and sanitize all user inputs.
+
+# Goal
+- 這是一份面試用的專案，請針對前後端架構做優化、並使用best Practice作為開發標準，並添加必要註解

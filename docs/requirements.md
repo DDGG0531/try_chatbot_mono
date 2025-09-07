@@ -1,7 +1,28 @@
-Product Requirements (Initial)
+產品需求 — 類 ChatGPT 網頁應用
 
-- Auth: Users can sign in/out with Google
-- Session: Keep user session via secure cookies
-- Profile: Show basic profile (name, email, avatar)
-- Non-functional: Local dev via pnpm; no secrets in VCS
+目標
+- 建立類似 ChatGPT 的網頁應用，包含登入、聊天、歷史紀錄與管理後台可管理使用者與 RAG 知識庫。
+- 以面試等級的架構與最佳實務為標準，重視可維護性。
 
+核心功能
+- 身分驗證：使用 Firebase 登入/登出（優先 Google，後續可擴充 Email/Password）。前端保存會話，後端驗證 ID Token。
+- 角色與權限：RBAC 至少包含 `user`、`admin`（可選 `editor`）。Admin 可管理使用者與知識庫設定。
+- 聊天：透過 LLM 供應商進行對話，支援串流回應（SSE）、系統提示、溫度與模型選擇。
+- 歷史紀錄：保存會話與訊息，可列表、搜尋、續聊；可選擇自動產生標題。
+- RAG：可附加知識庫提升答案品質；每個會話可選擇使用哪些 KB；顯示擷取來源引用。
+- 後台：提供儀表板管理使用者/角色、KB（新增/修改/刪除）、文件上傳、重建索引與查看匯入狀態。
+
+非功能性需求
+- 安全：後端驗證 Token、輸入驗證、速率限制、Admin 行為稽核、最小化個資處理。
+- 效能：串流開始前 300ms 內回應首包；即時推送 token；檢索延遲（50k chunks）目標 <200ms。
+- 可靠性：健康/就緒端點、優雅關閉、匯入工作冪等與重試回退。
+- 可觀測性：結構化日誌、請求 ID、基本指標（請求量/錯誤/延遲）、LLM 與檢索追蹤。
+- 測試：行覆蓋率 ≥80%（可行情境）；核心模組單元測試、Auth+Chat 正向流程 E2E、匯入管線測試。
+- 開發體驗：pnpm monorepo、拓撲建置、型別安全 DTO、每個 app 使用 `.env.local`，嚴禁秘鑰入版控。
+
+第一階段不納入
+- 金流/訂閱、團隊空間、多租戶隔離、進階審核、模型微調。
+
+成功標準
+- 一般使用者可登入、開啟會話、接收串流回覆、查看歷史、並使用至少一個 KB 的 RAG。
+- 管理者可變更使用者角色，並新增/更新/移除 KB 文件；重建索引會反映在聊天檢索結果。

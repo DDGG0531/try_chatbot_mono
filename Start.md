@@ -50,7 +50,7 @@ A quick guide to run this monorepo (Vue + Express + Google Login + Prisma + Post
   - Dev proxy forwards `/api` and `/auth` to `http://localhost:4000`
 - Backend (Express) on `http://localhost:4000`
   - `/auth/google`, `/auth/google/callback`, `/auth/logout`
-  - `/api/me`, `/api/health`
+  - `/api/me`
 - Database: PostgreSQL 16 via Docker, port `5432`
 
 ## Troubleshooting

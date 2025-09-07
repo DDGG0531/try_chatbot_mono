@@ -14,13 +14,17 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    // Dev Server 與 API 代理
+    // - 前端以 `/api` 作為固定前綴呼叫，開發時透過 proxy 轉發到實際後端位址
+    // - 生產環境可透過 Nginx/網關配置相同前綴或改用 `VITE_API_BASE`
     server: {
       port: 5173,
       proxy: {
-        '/proxy': {
-          target: env.VITE_API_BASE,
+        '/api': {
+          target: env.VITE_API_BASE || 'http://localhost:4000',
           changeOrigin: true,
-          rewrite: path => path.replace(/^\/proxy/, '')
+          // 將 `/api/*` 轉發為後端的 `/*`
+          rewrite: (p) => p.replace(/^\/api/, ''),
         },
       },
     },

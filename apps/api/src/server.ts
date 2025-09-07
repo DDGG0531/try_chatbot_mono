@@ -1,49 +1,34 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import { prisma } from '@/prisma';
 import admin from 'firebase-admin';
+import { prisma } from '@/prisma';
+import { config, hasFirebaseCredentials } from './config';
+import type { AuthUser } from './types/user';
 
-// Load environment from .env (Prisma default) and .env.local (runtime)
-dotenv.config({ path: '.env' });
-dotenv.config({ path: '.env.local' });
-
-const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
-
+// 建立 Express 應用
 const app = express();
 
-app.use(cors({ origin: CLIENT_ORIGIN }));
+// 基礎中介層
+app.use(cors({ origin: config.clientOrigin }));
 app.use(express.json());
-// Firebase Admin init
-const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
-const FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL;
-const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
+// Firebase Admin 初始化（若憑證齊全）
 if (!admin.apps.length) {
-  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
+  if (!hasFirebaseCredentials()) {
     console.warn('[auth] Missing Firebase Admin credentials. Token verification will fail.');
   } else {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: FIREBASE_PROJECT_ID,
-        clientEmail: FIREBASE_CLIENT_EMAIL,
-        privateKey: FIREBASE_PRIVATE_KEY,
-      }),
-    });
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: config.firebase.projectId!,
+          clientEmail: config.firebase.clientEmail!,
+          privateKey: config.firebase.privateKey!,
+        }),
+      });
+    } catch (e) {
+      console.error('[auth] Failed to initialize Firebase Admin:', e);
+    }
   }
-}
-
-type AuthUser = {
-  id: string;
-  displayName: string;
-  email?: string | null;
-  photo?: string | null;
-};
-
-declare global {
-  // eslint-disable-next-line no-var
-  var prismaUserUpserted: boolean | undefined;
 }
 
 async function ensureUser(decoded: admin.auth.DecodedIdToken): Promise<AuthUser> {
@@ -78,7 +63,6 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (!token) return res.sendStatus(401);
     const decoded = await admin.auth().verifyIdToken(token);
     const user = await ensureUser(decoded);
-    // @ts-expect-error attach user
     req.user = user;
     next();
   } catch (err) {
@@ -88,12 +72,37 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 
 // API routes
 app.get('/me', authMiddleware, (req: Request, res: Response) => {
-  // @ts-expect-error user injected by middleware
   res.json(req.user);
 });
+// 健康檢查端點（K8s/監控可使用）
+//（已移除健康檢查與就緒度端點）
 
-app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
+// 404 處理（最後註冊）
+app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 
-app.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`);
+// 統一錯誤處理（可擴充錯誤代碼/結構）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  console.error('[error]', JSON.stringify({
+    t: new Date().toISOString(),
+    level: 'error',
+    msg: 'unhandled',
+    method: req.method,
+    url: req.originalUrl || req.url,
+    error: String(err),
+  }));
+  res.status(500).json({ error: 'Internal Server Error' });
 });
+
+const server = app.listen(config.port, () => {
+  console.log(`API listening on http://localhost:${config.port}`);
+});
+
+// 優雅關閉（關閉 DB 連線）
+async function shutdown() {
+  console.log('Shutting down...');
+  await prisma.$disconnect();
+  server.close(() => process.exit(0));
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
