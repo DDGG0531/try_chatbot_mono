@@ -9,6 +9,15 @@ import { useSessionStore } from '@/stores/session';
 // - 寫入 Pinia session store，供全站使用
 
 let initialized = false;
+let ready = false;
+let readyResolvers: Array<() => void> = [];
+
+export function waitForAuthReady(): Promise<void> {
+  if (ready) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    readyResolvers.push(resolve);
+  });
+}
 
 export function initAuth() {
   if (initialized) return;
@@ -28,6 +37,13 @@ export function initAuth() {
     } catch (_err) {
       // 任何非 401 錯誤：將狀態視為未登入，但避免拋出以免中斷應用
       session.setUser(null);
+    } finally {
+      if (!ready) {
+        ready = true;
+        const resolvers = readyResolvers;
+        readyResolvers = [];
+        resolvers.forEach((r) => r());
+      }
     }
   });
 }
@@ -38,4 +54,3 @@ export function useAuth() {
     session,
   };
 }
-

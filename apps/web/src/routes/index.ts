@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
+import { waitForAuthReady } from '@/composables/useAuth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -22,6 +23,12 @@ const routes: RouteRecordRaw[] = [
     path: '/chat',
     name: 'chat',
     component: () => import('@/pages/Chat.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/test',
+    name: 'test',
+    component: () => import('@/pages/Test.vue'),
   },
 ]
 
@@ -34,10 +41,13 @@ export function createAppRouter() {
   // 簡易路由守衛：
   // - 需要認證的路由（meta.requiresAuth）在未登入時導回首頁
   // - 初始載入狀態為 loading 時不攔截，以避免在 auth 初始化期間造成閃爍
-  router.beforeEach((_to, _from) => {
+  router.beforeEach(async (_to, _from) => {
     const session = useSessionStore()
     if (_to.meta?.requiresAuth) {
-      if (session.status === 'loading') return true
+      // 等待首次 Auth 狀態解析完成（避免在 loading 階段放行造成功能頁閃爍）
+      if (session.status === 'loading') {
+        await waitForAuthReady()
+      }
       if (!session.isAuthenticated) return { name: 'home' }
     }
     return true

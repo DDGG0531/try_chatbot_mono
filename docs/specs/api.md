@@ -13,13 +13,13 @@ API 規格（草案）
 
 會話（Conversations）
 - GET `/conversations?cursor=<id>&limit=20` → `{ items: Conversation[], nextCursor? }`
-- POST `/conversations` { title?, model?, temperature?, kbIds? } → Conversation
+- POST `/conversations` { title? } → Conversation
 - GET `/conversations/:id` → 單筆會話摘要
 - GET `/conversations/:id/messages` → Message[]（可分頁）
-- PATCH `/conversations/:id` { title?, model?, temperature? } → Conversation
+- PATCH `/conversations/:id` { title? } → Conversation
 - DELETE `/conversations/:id` → 204
 
-聊天（串流，LangChain）
+聊天（串流，LangGraph）
 - POST `/chat`（SSE）
   - 請求：{
       conversationId?: string,
@@ -29,10 +29,10 @@ API 規格（草案）
       temperature?: number
     }
   - 回應（SSE 事件）：
-    - `data: { type: 'delta', content: string }`（LangChain streaming token）
+    - `data: { type: 'delta', content: string }`（LangGraph messages 模式逐段）
     - `data: { type: 'metadata', citations: Citation[], usage?: { promptTokens, completionTokens } }`（整段完成後送出）
     - `data: { type: 'done', messageId: string, conversationId: string }`
-  - 實作：以 LangChain Runnable（PromptTemplate + Retriever + LLM）組合；檢索以 pgvector 做向量搜尋。
+  - 實作：以 LangGraph 串接 LLM；未來整合 Retriever 時接入 pgvector 檢索。
 
 知識庫（Admin/Editor）
 - GET `/kb` → KnowledgeBase[]（依可見性與擁有權過濾）
@@ -53,8 +53,8 @@ API 規格（草案）
 - PATCH `/admin/users/:id` { role: 'USER'|'ADMIN'|'EDITOR' } → User（admin）
 
 DTO（簡化）
-- Conversation: { id, userId, title?, model, temperature, createdAt, updatedAt }
-- Message: { id, conversationId, role, content, createdAt, metadata? }
+- Conversation: { id, userId, title?, createdAt, updatedAt }
+- Message: { id, conversationId, role, content, reference, createdAt }
 - KnowledgeBase: { id, name, description?, isPrivate, ownerId?, createdAt }
 - Document: { id, kbId, source, uri?, title?, status, createdAt }
 - Citation: { docId, kbId, title?, uri?, snippet, score }
@@ -63,4 +63,4 @@ DTO（簡化）
 - 以 Zod 驗證請求；驗證失敗回 422。
 - 於 middleware 強制 RBAC：KB 與 Admin 路由需對應角色。
 - SSE 保活（心跳）並處理客端中斷。
-- LLM Provider 透過 LangChain 進行抽象（預設 OpenAI，相容其他供應商）。
+- LLM Provider 透過 LangChain/LangGraph 進行抽象（預設 OpenAI，相容其他供應商）。

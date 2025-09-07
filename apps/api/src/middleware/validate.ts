@@ -8,8 +8,10 @@ type Schemas = {
   headers?: ZodType<unknown>;
 };
 
-function formatZodError(err: ZodError) {
-  return err.issues.map((i) => ({
+function formatZodError(err: unknown) {
+  const z = err as ZodError | undefined;
+  const issues = Array.isArray(z?.issues) ? z!.issues : [{ path: [], code: 'invalid_input', message: String(err) } as any];
+  return issues.map((i: any) => ({
     path: i.path.join('.'),
     code: i.code,
     message: i.message,
@@ -19,43 +21,44 @@ function formatZodError(err: ZodError) {
 export function validate(schemas: Schemas) {
   return (req: Request, res: Response, next: NextFunction) => {
     const problems: Array<{ part: keyof Schemas; issues: ReturnType<typeof formatZodError> }> = [];
+    // 不覆寫 Express 內建屬性，將解析後的結果放在 req.validated
+    // 由型別宣告檔擴充，避免 runtime setter 錯誤
+    const validated: any = (req as any).validated || {};
 
     try {
       if (schemas.params) {
         const parsed = schemas.params.parse(req.params);
-        // 替換為已解析的乾淨資料
-        req.params = parsed as any;
+        validated.params = parsed;
       }
     } catch (e) {
-      problems.push({ part: 'params', issues: formatZodError(e as ZodError) });
+      problems.push({ part: 'params', issues: formatZodError(e) });
     }
 
     try {
       if (schemas.query) {
         const parsed = schemas.query.parse(req.query);
-        req.query = parsed as any;
+        validated.query = parsed;
       }
     } catch (e) {
-      problems.push({ part: 'query', issues: formatZodError(e as ZodError) });
+      problems.push({ part: 'query', issues: formatZodError(e) });
     }
 
     try {
       if (schemas.body) {
         const parsed = schemas.body.parse(req.body);
-        req.body = parsed as any;
+        validated.body = parsed;
       }
     } catch (e) {
-      problems.push({ part: 'body', issues: formatZodError(e as ZodError) });
+      problems.push({ part: 'body', issues: formatZodError(e) });
     }
 
     try {
       if (schemas.headers) {
-        // 以 record 物件驗證，注意 header 名稱需要在 schema 中小寫
         const parsed = schemas.headers.parse(req.headers);
-        req.headers = parsed as any;
+        validated.headers = parsed;
       }
     } catch (e) {
-      problems.push({ part: 'headers', issues: formatZodError(e as ZodError) });
+      problems.push({ part: 'headers', issues: formatZodError(e) });
     }
 
     if (problems.length > 0) {
@@ -65,6 +68,7 @@ export function validate(schemas: Schemas) {
       });
     }
 
+    (req as any).validated = validated;
     return next();
   };
 }

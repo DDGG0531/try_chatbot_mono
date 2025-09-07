@@ -16,6 +16,10 @@ export default defineConfig({
     'express',
     'cors',
     'dotenv',
+    'langchain',
+    '@langchain/openai',
+    '@langchain/langgraph',
+    '@langchain/core',
   ],
   tsconfig: 'tsconfig.json',
   // esbuildOptions(options) {

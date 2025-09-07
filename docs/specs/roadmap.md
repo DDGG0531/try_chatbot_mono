@@ -22,13 +22,13 @@ Roadmap 與驗收
   - 前端（Web）
     - [x] 建立聊天頁面（訊息區＋輸入區）
     - [x] 側欄會話列表（建立/切換）
-    - [ ] SSE 串流客戶端；即時追加訊息、停/續播控制
-    - [ ] 封裝 API：建立/取得會話、取得訊息、呼叫 `/chat` 串流（Vue Query 管理）
+    - [x] SSE 串流客戶端；即時追加訊息（停/續播後續）
+    - [x] 封裝 API：建立/取得會話、取得訊息、呼叫 `/chat` 串流（暫不啟用快取）
   - 後端（API）
-    - [ ] 擴充 Prisma：`Conversation`、`Message` 模型與遷移
-    - [ ] 以 zod 定義並驗證 API schema（request/response）
-    - [ ] `GET/POST /conversations`、`GET /conversations/:id/messages`、`PATCH/DELETE /conversations/:id`
-    - [ ] `POST /chat`（SSE）：以 LangChain Runnable（PromptTemplate + Retriever? + LLM）串流生成，保存訊息並回傳 `done`
+    - [x] 擴充 Prisma：`Conversation`、`Message` 模型與遷移
+    - [x] 以 zod 定義並驗證 API schema（request/response）
+    - [x] `GET/POST /conversations`、`GET /conversations/:id/messages`、`PATCH/DELETE /conversations/:id`
+    - [x] `POST /chat`（SSE）：以 LangGraph 串流生成（messages 模式），保存訊息並回傳 `done`
   - 驗收：助手回覆以串流顯示；歷史可見且可切換續聊。
 
 - M3 RAG v1

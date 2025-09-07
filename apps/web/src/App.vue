@@ -6,6 +6,7 @@
       <router-link to="/profile">Profile</router-link>
       <router-link to="/ui">UI 範例</router-link>
       <router-link to="/chat">Chat</router-link>
+      <router-link to="/test">Test</router-link>
     </nav>
     <router-view />
   </div>
