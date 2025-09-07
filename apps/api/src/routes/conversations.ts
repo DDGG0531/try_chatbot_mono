@@ -25,7 +25,7 @@ conversationsRouter.get(
   validate({ query: listQuery }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const q = ((req as any).validated?.query || req.query) as any;
+    const q = (req as any).validated!.query as z.infer<typeof listQuery>;
     const { limit = 20, cursor } = q;
     const where: any = { userId: user.id };
     if (cursor) where.createdAt = { lt: new Date(cursor) };
@@ -33,7 +33,7 @@ conversationsRouter.get(
     const items = await prisma.conversation.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: Number(limit),
+      take: limit,
       select: { id: true, userId: true, title: true, createdAt: true, updatedAt: true },
     });
     const nextCursor = items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
@@ -48,7 +48,7 @@ conversationsRouter.post(
   validate({ body: upsertBody }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const b = ((req as any).validated?.body || req.body) as any;
+    const b = (req as any).validated!.body as z.infer<typeof upsertBody>;
     const { title } = b;
     const conv = await prisma.conversation.create({
       data: { userId: user.id, title },
@@ -65,7 +65,7 @@ conversationsRouter.get(
   validate({ params: idParam }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const p = ((req as any).validated?.params || req.params) as any;
+    const p = (req as any).validated!.params as z.infer<typeof idParam>;
     const { id } = p;
     const conv = await prisma.conversation.findFirst({
       where: { id, userId: user.id },
@@ -83,8 +83,8 @@ conversationsRouter.get(
   validate({ params: idParam, query: msgListQuery }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const p = ((req as any).validated?.params || req.params) as any;
-    const q = ((req as any).validated?.query || req.query) as any;
+    const p = (req as any).validated!.params as z.infer<typeof idParam>;
+    const q = (req as any).validated!.query as z.infer<typeof msgListQuery>;
     const { id } = p;
     const { limit = 200, cursor } = q;
 
@@ -97,7 +97,7 @@ conversationsRouter.get(
     const items = await prisma.message.findMany({
       where,
       orderBy: { createdAt: 'asc' },
-      take: Number(limit),
+      take: limit,
       select: { id: true, role: true, content: true, createdAt: true, reference: true },
     });
     const nextCursor = items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
@@ -112,8 +112,8 @@ conversationsRouter.patch(
   validate({ params: idParam, body: upsertBody }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const p = ((req as any).validated?.params || req.params) as any;
-    const b = ((req as any).validated?.body || req.body) as any;
+    const p = (req as any).validated!.params as z.infer<typeof idParam>;
+    const b = (req as any).validated!.body as z.infer<typeof upsertBody>;
     const { id } = p;
     const { title } = b;
     const conv = await prisma.conversation.findFirst({ where: { id, userId: user.id } });
@@ -134,7 +134,7 @@ conversationsRouter.delete(
   validate({ params: idParam }),
   async (req: Request, res: Response) => {
     const user = req.user as AuthUser;
-    const p = ((req as any).validated?.params || req.params) as any;
+    const p = (req as any).validated!.params as z.infer<typeof idParam>;
     const { id } = p;
     const conv = await prisma.conversation.findFirst({ where: { id, userId: user.id } });
     if (!conv) return res.sendStatus(404);

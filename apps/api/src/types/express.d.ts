@@ -1,8 +1,9 @@
-import type { AuthUser } from '../types/user';
+/// <reference types="express-serve-static-core" />
+// express.d.ts
 
+import { AuthUser } from "./user"
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: AuthUser;
+    user: AuthUser
   }
 }
-

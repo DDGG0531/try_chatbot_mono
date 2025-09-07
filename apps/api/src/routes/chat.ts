@@ -39,7 +39,7 @@ chatRouter.post(
     // 簡化：不額外送開場或 keepalive，避免不必要複雜度
 
     const user = req.user as AuthUser;
-    const vbody = ((req as any).validated?.body || req.body) as ChatReq;
+    const vbody = (req as any).validated!.body as ChatReq;
     const { conversationId, messages, model, temperature } = vbody;
 
     try {
