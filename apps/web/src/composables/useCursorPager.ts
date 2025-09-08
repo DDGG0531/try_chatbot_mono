@@ -24,7 +24,7 @@ export function useCursorPager<T>(fetcher: (params?: { limit?: number; offset?: 
     loading.value = true
     try {
       const { items: more, hasNextPage: moreComing } = await fetcher({ limit, offset: offset.value })
-      items.value = [...items.value, ...more]
+      items.value = [...items.value, ...more] as T[]
       offset.value += more.length
       hasNextPage.value = !!moreComing
     } finally {
