@@ -7,6 +7,7 @@ dist
 apps/*/.env
 apps/*/.env.*
 coverage
+!**/.env.example
 
 reference/*
 
