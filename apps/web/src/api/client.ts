@@ -20,14 +20,6 @@ http.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
-  // E2E：允許以本地儲存的 Bearer 直接帶入
-  if (import.meta.env.VITE_E2E_AUTH === '1') {
-    const token = localStorage.getItem('E2E_BEARER');
-    if (token) {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-    }
-  }
   return config;
 });
 
